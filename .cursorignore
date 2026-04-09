@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+.env.local
+
+# Build and distribution
+dist/
+build/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Database
+data/
+*.db
+
+# OS
+.DS_Store
+Thumbs.db

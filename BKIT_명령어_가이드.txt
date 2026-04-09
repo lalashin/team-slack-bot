@@ -1,0 +1,1016 @@
+================================================================================
+BKIT 플러그인 명령어 완전 가이드
+================================================================================
+작성일: 2026-04-09
+버전: BKIT v1.5.9
+
+================================================================================
+1. /plan vs /pdca plan 차이
+================================================================================
+
+1.1 /plan (레거시 명령어)
+────────────────────────────────────────────────────────────────────────────
+상태: 구식 (deprecated)
+기능: 기본적인 Plan 문서 생성만 지원
+사용법: /plan {feature}
+
+특징:
+- 단순한 기능만 제공
+- 더 이상 권장되지 않음
+- 호환성 유지용으로만 남아있음
+
+1.2 /pdca plan (현재 권장)
+────────────────────────────────────────────────────────────────────────────
+상태: 최신 (v1.5.9)
+기능: 더 많은 기능 지원
+사용법: /pdca plan {feature}
+
+지원 기능:
+✓ Plan 문서 생성
+✓ Task 자동 생성
+✓ PDCA 상태 추적
+✓ Executive Summary 필수 생성
+✓ 메모리 업데이트
+✓ 블로킹 관계 자동 설정
+
+결론
+────────────────────────────────────────────────────────────────────────────
+❌ /plan 은 사용하지 마세요 (레거시)
+✅ /pdca plan 을 사용하세요 (현재 권장)
+
+더 강력한 기능, 자동화, 상태 추적을 모두 지원합니다.
+
+================================================================================
+2. PDCA 관련 명령어 (최우선)
+================================================================================
+
+PDCA는 Plan → Design → Do → Check(Analyze) → Act(Iterate) → Report의 6단계입니다.
+
+2.1 PDCA 전체 명령어 목록
+────────────────────────────────────────────────────────────────────────────
+
+명령어                  설명                        사용법                      단계
+────────────────────────────────────────────────────────────────────────────
+/pdca plan             Plan 문서 생성              /pdca plan team-slack-bot   Plan (1)
+/pdca design           Design 문서 생성            /pdca design team-slack-bot  Design (2)
+/pdca do               Do 단계 가이드              /pdca do team-slack-bot      Do (3)
+/pdca analyze          Gap 분석 (Check 단계)       /pdca analyze team-slack-bot Check (4)
+/pdca iterate          자동 개선 (Act 단계)        /pdca iterate team-slack-bot Act (5)
+/pdca report           완료 보고서                 /pdca report team-slack-bot  Report (6)
+/pdca archive          완료된 문서 보관            /pdca archive team-slack-bot Archive (7)
+/pdca cleanup          보관된 문서 정리            /pdca cleanup                Cleanup
+/pdca status           현재 상태 확인              /pdca status                 Status 확인
+/pdca next             다음 단계 안내              /pdca next                   단계 안내
+/pdca team             팀 모드 시작                /pdca team team-slack-bot    Team Mode
+
+2.2 각 단계별 상세 설명
+────────────────────────────────────────────────────────────────────────────
+
+[단계 1] /pdca plan {feature}
+─────────────────────────────
+기능:
+  - Plan 문서 생성 (docs/01-plan/features/{feature}.plan.md)
+  - Executive Summary 테이블 자동 생성 (Problem/Solution/Function UX/Core Value)
+  - Task #1 자동 생성 ([Plan] {feature})
+  - PDCA 상태 파일 업데이트
+
+결과:
+  ✓ Plan 문서 완성
+  ✓ Task 자동 생성
+  ✓ 다음 단계: Design
+
+[단계 2] /pdca design {feature}
+──────────────────────────────
+기능:
+  - Design 문서 생성 (docs/02-design/features/{feature}.design.md)
+  - Plan 문서 내용 자동 참조
+  - Task #2 자동 생성 ([Design] {feature})
+  - Task #1에 블로킹 설정 (Design은 Plan 완료 후)
+
+선행조건:
+  ✓ Plan 문서가 존재해야 함
+
+결과:
+  ✓ Design 문서 완성
+  ✓ 아키텍처 정의
+  ✓ 다음 단계: Do
+
+[단계 3] /pdca do {feature}
+──────────────────────────
+기능:
+  - Do 단계 구현 가이드 제공
+  - 구현 순서 체크리스트
+  - Task #3 자동 생성 ([Do] {feature})
+
+선행조건:
+  ✓ Design 문서가 존재해야 함
+
+결과:
+  ✓ 구현 시작
+  ✓ 코드 작성 가이드
+  ✓ 다음 단계: 코드 구현 후 Analyze
+
+[단계 4] /pdca analyze {feature}
+────────────────────────────────
+기능:
+  - Gap Detector Agent 자동 실행
+  - Design 문서 vs 구현 코드 비교
+  - Match Rate 계산 (0-100%)
+  - Gap 리스트 생성
+  - Analysis 문서 생성 (docs/03-analysis/{feature}.analysis.md)
+  - Task #4 자동 생성 ([Check] {feature})
+
+결과:
+  ✓ Match Rate >= 90% → Report 단계로 진행
+  ✓ Match Rate < 90%  → Iterate 단계로 진행
+
+[단계 5] /pdca iterate {feature}
+────────────────────────────────
+기능:
+  - PDCA Iterator Agent 자동 실행
+  - Match Rate < 90%일 때만 실행
+  - Gap에 따라 자동 수정
+  - 최대 5회 반복
+  - Task #5, #6... 자동 생성 ([Act-1], [Act-2], ...)
+
+실행 조건:
+  ✓ Match Rate < 90%
+
+반복 규칙:
+  - 최대 반복: 5회
+  - 종료 조건: Match Rate >= 90% 또는 최대 반복 도달
+
+결과:
+  ✓ Match Rate >= 90% 달성
+  ✓ 다음 단계: Report
+
+[단계 6] /pdca report {feature}
+──────────────────────────────
+기능:
+  - Report Generator Agent 자동 실행
+  - Plan, Design, 구현 코드, Analysis 통합
+  - Executive Summary with Value Delivered
+  - 완료 보고서 생성 (docs/04-report/{feature}.report.md)
+  - Task #7 자동 생성 ([Report] {feature})
+  - Phase → "completed" 상태 변경
+
+선행조건:
+  ✓ Match Rate >= 90% (필수)
+
+결과:
+  ✓ 최종 보고서 완성
+  ✓ 다음 단계: Archive
+
+[단계 7] /pdca archive {feature}
+────────────────────────────────
+기능:
+  - 완료된 문서들을 docs/archive/YYYY-MM/{feature}/ 로 이동
+  - Archive Index 자동 생성
+  - PDCA 상태에서 feature 제거 (--summary 옵션 사용 시 요약만 남김)
+
+옵션:
+  /pdca archive {feature}              (완전 삭제)
+  /pdca archive {feature} --summary    (요약 보존)
+
+선행조건:
+  ✓ Report 완성 (Phase = "completed")
+
+결과:
+  ✓ 문서 아카이빙 완료
+  ✓ 프로젝트 정리
+
+2.3 상태 확인 명령어
+────────────────────────────────────────────────────────────────────────────
+
+/pdca status
+─────────────
+기능:
+  - 현재 PDCA 상태 출력
+  - 활성 feature 확인
+  - 현재 phase 확인
+  - Match Rate 확인 (Check 단계일 때)
+  - Task 상태 확인
+
+출력 예:
+  📊 PDCA Status
+  ─────────────────────────────
+  Feature: user-authentication
+  Phase: Check (Gap Analysis)
+  Match Rate: 85%
+  Iteration: 2/5
+  ─────────────────────────────
+  [Plan] ✅ → [Design] ✅ → [Do] ✅ → [Check] 🔄 → [Act] ⏳
+
+/pdca next
+──────────
+기능:
+  - 다음 단계 안내
+  - 필요한 명령어 제시
+  - Phase 진행 상황 확인
+
+사용처:
+  - 다음 해야 할 일이 무엇인지 확인하고 싶을 때
+  - Phase 진행 순서를 잊었을 때
+
+2.4 팀 모드 명령어 (Agent Teams)
+────────────────────────────────────────────────────────────────────────────
+
+/pdca team {feature}
+───────────────────
+기능:
+  - Agent Teams를 활용한 병렬 PDCA 진행
+  - CTO-Lead 자동 조율
+  - 여러 Agent가 동시에 작업
+
+필수 조건:
+  ✓ Agent Teams 활성화 (환경변수 설정)
+  ✓ Dynamic 또는 Enterprise 레벨 프로젝트
+
+팀 구성:
+  Dynamic  : 3명 (developer, frontend, qa)
+  Enterprise: 5명 (architect, developer, qa, reviewer, security)
+
+/pdca team status
+─────────────────
+기능:
+  - 팀 모드 상태 확인
+  - 각 팀원의 작업 상태 조회
+
+출력 예:
+  📊 PDCA Team Status
+  ─────────────────────────────
+  Agent Teams: Available ✅
+  Display Mode: in-process
+  Teammates: 4 / 4 (Enterprise)
+  ─────────────────────────────
+  Feature: user-auth
+    architect: [Design] in progress
+    developer: [Do] waiting
+    qa: idle
+    reviewer: idle
+
+/pdca team cleanup
+──────────────────
+기능:
+  - 팀 모드 종료
+  - 리소스 정리
+  - 단일 세션 모드로 복귀
+
+================================================================================
+3. 프로젝트 레벨 초기화 명령어
+================================================================================
+
+3.1 프로젝트 시작 명령어
+────────────────────────────────────────────────────────────────────────────
+
+명령어                  설명                        사용법              레벨
+────────────────────────────────────────────────────────────────────────────
+/starter               정적 웹 프로젝트 시작       /starter init       Starter
+/dynamic               동적 웹 프로젝트 시작       /dynamic init       Dynamic
+/enterprise            엔터프라이즈 프로젝트       /enterprise init     Enterprise
+
+3.2 프로젝트 레벨 선택 가이드
+────────────────────────────────────────────────────────────────────────────
+
+[Starter 레벨]
+───────────────
+프로젝트 유형: 정적 웹사이트
+기술: HTML, CSS, JavaScript (프레임워크 없음)
+예시: 포트폴리오, 랜딩페이지, 블로그
+특징: 가장 간단함, 빠른 시작
+
+/starter init
+  → README.md
+  → index.html
+  → styles.css
+  → script.js
+
+[Dynamic 레벨]
+──────────────
+프로젝트 유형: 동적 웹 애플리케이션
+기술: Node.js + Express + BaaS (bkend.ai)
+예시: Todo 앱, SNS, 전자상거래
+특징: 인증, 데이터베이스, API 필요
+
+/dynamic init
+  → package.json
+  → src/app.js
+  → src/handlers/
+  → .env 설정
+
+[Enterprise 레벨]
+─────────────────
+프로젝트 유형: 엔터프라이즈급 시스템
+기술: Microservices, Kubernetes, Terraform
+예시: 대규모 플랫폼, SaaS, 금융 시스템
+특징: 복잡한 아키텍처, 높은 확장성
+
+/enterprise init
+  → Monorepo 구조
+  → Microservices
+  → CI/CD 파이프라인
+  → Infrastructure as Code
+
+================================================================================
+4. 학습 및 가이드 명령어
+================================================================================
+
+명령어                      설명                        사용법
+────────────────────────────────────────────────────────────────────────────
+/development-pipeline       9단계 개발 파이프라인       /development-pipeline
+/bkit                       BKIT 플러그인 도움말         /bkit
+/claude-code-learning       Claude Code 학습            /claude-code-learning
+/output-style               출력 스타일 변경            /output-style bkit-pdca-guide
+/output-style-setup         출력 스타일 설치            /output-style-setup
+
+4.1 /development-pipeline
+────────────────────────
+기능:
+  - 9단계 개발 파이프라인 설명
+  - 각 단계별 목표와 산출물
+  - 어느 단계부터 시작할지 안내
+
+9단계:
+  1. Schema & Terminology      (용어/스키마 정의)
+  2. Coding Rules              (코딩 규칙)
+  3. UI/UX Mockup              (UI 목업)
+  4. API Design & Implementation (API 설계)
+  5. Design System             (디자인 시스템)
+  6. UI Integration            (UI 통합)
+  7. SEO & Security            (최적화/보안)
+  8. Code Review               (코드 리뷰)
+  9. Deployment                (배포)
+
+4.2 /bkit
+────────
+기능:
+  - BKIT 플러그인 전체 도움말
+  - 사용 가능한 모든 스킬 목록
+  - 각 스킬별 사용법
+
+4.3 /claude-code-learning
+──────────────────────────
+기능:
+  - Claude Code 설정 및 사용법 학습
+  - 생산성 향상 팁
+  - 단축키 및 기능 설명
+
+4.4 /output-style
+──────────────────
+기능:
+  - 응답 스타일 변경
+  - PDCA 친화적 포맷 선택
+
+권장 스타일:
+  /output-style bkit-pdca-guide
+  (PDCA 워크플로우에 최적화된 스타일)
+
+4.5 /output-style-setup
+─────────────────────
+기능:
+  - 출력 스타일 파일 설치
+  - 프로젝트에 맞는 스타일 적용
+
+================================================================================
+5. Phase 관련 명령어 (개발 단계별)
+================================================================================
+
+명령어                      설명                        내용
+────────────────────────────────────────────────────────────────────────────
+/phase-1-schema             스키마 & 용어 정의         데이터 구조, 엔티티 설계
+/phase-2-convention         코딩 규칙 정의             코드 스타일, 컨벤션
+/phase-3-mockup             UI/UX 목업                 HTML/CSS 프로토타입
+/phase-4-api                API 설계 & 구현            백엔드 API, Zero Script QA
+/phase-5-design-system      디자인 시스템              컴포넌트 라이브러리
+/phase-6-ui-integration     UI 통합                    프론트엔드 구현
+/phase-7-seo-security       SEO & 보안                 최적화, 취약점 제거
+/phase-8-review             코드 리뷰                  품질 검증
+/phase-9-deployment         배포                       운영 환경 배포
+
+5.1 각 Phase 상세 설명
+────────────────────────────────────────────────────────────────────────────
+
+/phase-1-schema
+─────────────
+목표: 프로젝트의 데이터 구조 정의
+산출물: Schema 문서, 엔티티 다이어그램
+예시:
+  - 사용자 엔티티 정의
+  - 관계 매핑
+  - 데이터 타입 결정
+
+/phase-2-convention
+──────────────────
+목표: 팀 전체가 따를 코딩 규칙 정의
+산출물: Convention 문서
+예시:
+  - 파일명 규칙 (camelCase, snake_case)
+  - 함수 명명 규칙
+  - 디렉토리 구조
+  - 주석 규칙
+
+/phase-3-mockup
+──────────────
+목표: UI/UX 프로토타입 작성
+산출물: HTML/CSS 프로토타입
+기능:
+  - 디자이너 없이 UI 만들 수 있음
+  - 최신 UI/UX 트렌드 적용
+  - Next.js 컴포넌트로 쉽게 변환
+
+/phase-4-api
+────────────
+목표: 백엔드 API 설계 및 구현
+기능:
+  - API 엔드포인트 정의
+  - 요청/응답 형식 명세
+  - Zero Script QA (로그 기반 테스트)
+
+/phase-5-design-system
+──────────────────────
+목표: 재사용 가능한 UI 컴포넌트 라이브러리 구축
+산출물: 디자인 시스템 문서, 컴포넌트 라이브러리
+예시:
+  - Button, Input, Modal 등 기본 컴포넌트
+  - 디자인 토큰 (색상, 폰트 등)
+  - 컴포넌트 문서 (Storybook)
+
+/phase-6-ui-integration
+───────────────────────
+목표: 프론트엔드 구현 및 API 통합
+산출물: 완성된 UI 코드
+기능:
+  - 상태 관리 (Context API, Redux 등)
+  - API 클라이언트 통합
+  - 폼 처리 및 검증
+
+/phase-7-seo-security
+────────────────────
+목표: 검색 최적화 및 보안 강화
+기능:
+  - Meta 태그 추가
+  - Semantic HTML
+  - 보안 취약점 제거
+  - OWASP Top 10 체크
+
+/phase-8-review
+───────────────
+목표: 전체 코드 품질 검증
+기능:
+  - 아키텍처 일관성 확인
+  - 컨벤션 준수 여부 확인
+  - Design-Implementation Gap 분석
+  - 잠재적 문제 감지
+
+/phase-9-deployment
+───────────────────
+목표: 운영 환경에 배포
+기능:
+  - CI/CD 파이프라인 설정
+  - 환경 설정 (dev, staging, prod)
+  - 배포 자동화
+  - 모니터링 설정
+
+================================================================================
+6. 유틸리티 명령어
+================================================================================
+
+명령어                      설명                        사용 시기
+────────────────────────────────────────────────────────────────────────────
+/code-review                코드 리뷰                   구현 완료 후
+/simplify                   코드 정리                   Check >= 90% 후
+/zero-script-qa             로그 기반 테스트            API 구현 후
+/plan-plus                  고급 Plan (브레인스토밍)    복잡한 기획 필요 시
+/memory                     메모리 관리                 기억할 정보 저장 시
+
+6.1 /code-review
+────────────────
+기능:
+  - 코드 품질 분석
+  - 버그 감지
+  - 모범 사례 확인
+  - 개선 제안
+
+사용 시기:
+  - PR 전에 코드 검토하고 싶을 때
+  - 코드 품질을 높이고 싶을 때
+
+6.2 /simplify
+──────────────
+기능:
+  - 변경된 코드 검토
+  - 중복 제거
+  - 효율성 개선
+  - 문제점 수정
+
+사용 시기:
+  - /pdca analyze 결과 Match Rate >= 90% 후
+  - 코드를 더 간단하게 하고 싶을 때
+  - /pdca report 전에 코드 정리하고 싶을 때
+
+권장 순서:
+  /pdca analyze
+    ↓ (Match Rate >= 90%)
+  /simplify
+    ↓
+  /pdca report
+
+6.3 /zero-script-qa
+────────────────────
+기능:
+  - 테스트 스크립트 없이 API 검증
+  - Docker 로그 모니터링
+  - 실시간 JSON 로깅 기반 검증
+  - 버그 자동 감지
+
+사용 시기:
+  - API 구현 완료 후
+  - Phase 4 (API Design & Implementation) 진행 중
+
+6.4 /plan-plus
+───────────────
+기능:
+  - 일반 /pdca plan 보다 고급 기능
+  - 브레인스토밍 단계 포함
+  - 의도 발견 (Intent Discovery)
+  - 대안 탐색 (Alternatives Exploration)
+  - YAGNI 검토 (You Aren't Gonna Need It)
+  - 더 높은 품질의 Plan 문서 생성
+
+사용 시기:
+  - 요구사항이 모호할 때
+  - 여러 구현 방식 중 최선을 선택하고 싶을 때
+  - 복잡한 기능을 기획할 때
+
+예시:
+  /plan-plus team-slack-bot
+  (일반 /pdca plan 대신 사용)
+
+6.5 /memory
+────────────
+기능:
+  - Claude Code 자동 메모리 관리
+  - 중요 정보 저장
+  - 미래 세션에서 사용할 정보 기록
+
+사용 시기:
+  - 프로젝트 특성 기록
+  - 팀 규칙 저장
+  - 중요 결정사항 문서화
+  - 문제 해결 방법 기록
+
+================================================================================
+7. 플랫폼별 명령어
+================================================================================
+
+명령어                      설명                        사용법
+────────────────────────────────────────────────────────────────────────────
+/mobile-app                 모바일 앱 가이드            /mobile-app
+/desktop-app                데스크톱 앱 가이드          /desktop-app
+/bkit-templates             PDCA 템플릿                 /bkit-templates
+
+7.1 /mobile-app
+────────────────
+기능:
+  - 모바일 앱 개발 가이드
+  - React Native / Flutter / Expo
+  - 크로스 플랫폼 개발 지원
+
+사용 시기:
+  - 모바일 앱 프로젝트 시작할 때
+  - 웹 앱을 모바일로 변환할 때
+
+7.2 /desktop-app
+──────────────
+기능:
+  - 데스크톱 앱 개발 가이드
+  - Electron / Tauri 프레임워크
+  - 크로스 플랫폼 지원
+
+사용 시기:
+  - 데스크톱 애플리케이션 만들 때
+  - 웹 기술로 네이티브 앱 개발
+
+7.3 /bkit-templates
+──────────────────
+기능:
+  - PDCA 문서 템플릿
+  - Plan, Design, Analysis, Report 템플릿
+  - 일관된 문서 형식 보장
+
+사용 시기:
+  - PDCA 문서 작성할 때
+  - 템플릿 구조를 확인하고 싶을 때
+
+================================================================================
+8. BaaS 플랫폼 명령어 (bkend.ai)
+================================================================================
+
+명령어                      설명                        사용법
+────────────────────────────────────────────────────────────────────────────
+/bkend-quickstart           BaaS 시작하기               /bkend-quickstart
+/bkend-auth                 인증 & 보안                 /bkend-auth
+/bkend-data                 데이터베이스                /bkend-data
+/bkend-storage              파일 저장소                 /bkend-storage
+/bkend-cookbook             프로젝트 튜토리얼           /bkend-cookbook
+
+8.1 /bkend-quickstart
+──────────────────
+기능:
+  - bkend.ai 플랫폼 소개
+  - MCP 설정
+  - 첫 프로젝트 생성
+  - 기본 개념 설명
+
+사용 시기:
+  - bkend.ai를 처음 사용할 때
+  - BaaS 개념을 배우고 싶을 때
+
+8.2 /bkend-auth
+─────────────
+기능:
+  - 이메일 인증 (signup, login)
+  - 소셜 로그인 (Google, GitHub)
+  - 매직 링크
+  - JWT 토큰 관리 (Access 1h, Refresh 7d)
+  - 세션 관리
+  - RBAC (Role-Based Access Control)
+
+사용 시기:
+  - 사용자 인증 구현할 때
+  - 권한 관리 설정할 때
+
+8.3 /bkend-data
+───────────────
+기능:
+  - 테이블 생성
+  - CRUD 작업
+  - 7가지 컬럼 타입
+  - 필터링 (AND/OR, 8가지 연산자)
+  - 정렬 및 페이지네이션
+  - 관계 및 조인
+  - 인덱싱
+
+사용 시기:
+  - 데이터베이스 스키마 설계할 때
+  - 데이터 쿼리 작성할 때
+
+8.4 /bkend-storage
+──────────────────
+기능:
+  - 파일 업로드 (단일, 다중, 멀티파트)
+  - Presigned URL을 통한 업로드
+  - 파일 다운로드 (CDN vs Presigned)
+  - 4가지 Visibility 레벨 (public/private/protected/shared)
+  - 버킷 관리
+
+사용 시기:
+  - 파일 업로드 기능 구현할 때
+  - 파일 저장소 설계할 때
+
+8.5 /bkend-cookbook
+────────────────────
+기능:
+  - 10개의 단일 프로젝트 가이드
+  - 4개의 풀 가이드 프로젝트
+    * Blog (블로그)
+    * Recipe App (레시피 앱)
+    * Shopping Mall (쇼핑몰)
+    * Social Network (소셜 네트워크)
+  - 단계별 튜토리얼
+  - 문제 해결 가이드
+
+사용 시기:
+  - 실제 프로젝트를 따라 만들고 싶을 때
+  - bkend.ai 사용법을 배우고 싶을 때
+  - 특정 기능 구현 방법을 알고 싶을 때
+
+================================================================================
+9. 설정 명령어
+================================================================================
+
+명령어                      설명                        사용법
+────────────────────────────────────────────────────────────────────────────
+/keybindings-help           키보드 단축키 설정          /keybindings-help
+/update-config              설정 변경                   /update-config
+/loop                       반복 실행                   /loop 5m /foo
+/schedule                   예약 실행                   /schedule
+
+9.1 /keybindings-help
+─────────────────────
+기능:
+  - 키보드 단축키 커스터마이징
+  - 키 바인딩 수정
+  - 코드 바인딩 (Ctrl+A, Ctrl+B 등)
+  - 단축키 목록 확인
+
+사용 시기:
+  - 키 단축키를 변경하고 싶을 때
+  - 특정 명령어 단축키 추가할 때
+
+9.2 /update-config
+───────────────
+기능:
+  - Claude Code 설정 수정
+  - settings.json 설정
+  - 자동화 훅 설정 ("~할 때마다", "~하기 전에")
+
+사용 시기:
+  - Claude Code 기본 동작 변경할 때
+  - 반복 작업 자동화 설정할 때
+
+9.3 /loop
+───────
+기능:
+  - 명령어 또는 프롬프트 반복 실행
+  - 정기적인 상태 확인
+  - 반복 간격 설정 가능
+
+사용 예:
+  /loop 5m /pdca status
+  (5분마다 PDCA 상태 확인)
+
+  /loop 1h "배포 상태 확인해줘"
+  (1시간마다 배포 상태 확인)
+
+9.4 /schedule
+───────────
+기능:
+  - 특정 시간에 명령어 실행
+  - Cron 스케줄 설정
+  - 원격 에이전트 자동 실행
+
+사용 시기:
+  - 매일 정해진 시간에 작업할 때
+  - 자동화된 보고서 생성할 때
+
+================================================================================
+10. 명령어 사용 흐름 (언제 어떤 명령어를 쓸까?)
+================================================================================
+
+10.1 PDCA 사이클 (필수 순서)
+────────────────────────────────────────────────────────────────────────────
+
+프로젝트 시작:
+  /starter init  (또는 /dynamic init, /enterprise init)
+    ↓
+[Phase 1] 기획:
+  /pdca plan team-slack-bot
+    ↓
+[Phase 2] 설계:
+  /pdca design team-slack-bot
+    ↓
+[Phase 3] 구현:
+  /pdca do team-slack-bot
+  → 코드 작성 시작
+    ↓
+[Phase 4-5] 검증 & 개선:
+  /pdca analyze team-slack-bot
+    ↓
+  Match Rate 확인:
+    ✓ >= 90%  → /simplify (선택)    → /pdca report
+    ✗ < 90%   → /pdca iterate       → /pdca analyze (반복)
+    ↓
+[Phase 6] 보고:
+  /pdca report team-slack-bot
+    ↓
+[Phase 7] 정리:
+  /pdca archive team-slack-bot
+    ↓
+완료! ✅
+
+10.2 개발 중 자주 사용
+────────────────────────────────────────────────────────────────────────────
+
+구현 중:
+  /pdca status            (진행 상황 확인)
+  /pdca next              (다음 단계 확인)
+
+코드 리뷰:
+  /code-review            (코드 품질 검토)
+  /zero-script-qa         (API 테스트)
+
+최종 정리:
+  /simplify               (코드 정리)
+  /phase-8-review         (전체 코드 검증)
+
+10.3 학습/참고
+────────────────────────────────────────────────────────────────────────────
+
+처음 시작:
+  /development-pipeline   (파이프라인 이해)
+  /bkit                   (BKIT 소개)
+  /bkend-quickstart       (BaaS 소개)
+
+상세 학습:
+  /phase-1-schema         (스키마 설계)
+  /phase-2-convention     (코딩 규칙)
+  /phase-3-mockup         (UI 만들기)
+  /phase-4-api            (API 설계)
+  등등...
+
+기술 선택:
+  /mobile-app             (모바일 개발)
+  /desktop-app            (데스크톱 개발)
+  /bkend-data             (데이터베이스)
+
+================================================================================
+11. 우리 프로젝트 "Team Slack Bot" 진행 상황
+================================================================================
+
+현재 상태:
+  ✅ Plan 문서 완성   (docs/01-plan/features/team-slack-bot.plan.md)
+  ✅ Design 문서 완성 (docs/02-design/features/team-slack-bot.design.md)
+  ⏳ Do 단계 준비      (구현 시작 예정)
+
+다음 단계:
+
+  1단계: /pdca do team-slack-bot
+         → 구현 가이드 제공
+         → 파일 목록 및 구현 순서 안내
+
+  2단계: 코드 작성
+         → README.md 생성
+         → package.json 설정
+         → Slack Bot 기본 구조 작성
+         → 명령어 핸들러 구현
+
+  3단계: /pdca analyze team-slack-bot
+         → Gap 분석
+         → Match Rate 계산
+
+  4단계: (Match Rate < 90%) /pdca iterate
+         → 자동 개선
+
+  5단계: (Match Rate >= 90%) /pdca report
+         → 최종 보고서 생성
+
+================================================================================
+12. 자주 묻는 질문 (FAQ)
+================================================================================
+
+Q1. /plan과 /pdca plan의 정확한 차이는?
+───────────────────────────────────────
+A. /plan은 레거시 명령어로 더 이상 권장되지 않습니다.
+   /pdca plan은 최신 버전으로 더 많은 자동화와 기능을 제공합니다:
+   - Task 자동 생성
+   - PDCA 상태 추적
+   - Executive Summary 필수 생성
+   → 항상 /pdca plan을 사용하세요!
+
+Q2. 여러 feature를 동시에 진행할 수 있나요?
+──────────────────────────────────────
+A. 가능합니다. 하지만 권장되지 않습니다.
+   - 한 번에 하나의 feature에 집중하세요
+   - /pdca team (Agent Teams)을 사용하면 병렬 처리 가능
+   - Dynamic/Enterprise 레벨에서만 지원
+
+Q3. Match Rate가 뭐예요?
+──────────────────────
+A. Design 문서와 구현 코드의 일치도입니다 (0-100%).
+   - >= 90% : 보고서 작성 가능
+   - < 90%  : /pdca iterate로 개선 필요
+
+Q4. /simplify는 언제 써요?
+────────────────────────
+A. /pdca analyze 결과 Match Rate >= 90% 후에 사용하세요.
+   순서: /pdca analyze → /simplify → /pdca report
+
+Q5. Error가 발생했어요. 어떻게 하죠?
+───────────────────────────────
+A. 상황에 따라:
+   - Plan 문서가 없으면: /pdca plan 실행
+   - Design 문서가 없으면: /pdca design 실행
+   - 진행 상황이 불명확하면: /pdca status 실행
+   - 다음 단계를 모르면: /pdca next 실행
+
+Q6. 언제 /plan-plus를 사용하나요?
+─────────────────────────────
+A. 요구사항이 복잡하거나 모호할 때:
+   - 여러 구현 방식 중 최선을 선택해야 할 때
+   - 브레인스토밍이 필요할 때
+   - 더 높은 품질의 기획 문서가 필요할 때
+   (일반 /pdca plan 대신 사용)
+
+Q7. Agent Teams는 뭐예요?
+──────────────────────────
+A. 여러 AI Agent가 동시에 PDCA 단계를 병렬로 진행하는 기능입니다.
+   - Dynamic: 3명 (developer, frontend, qa)
+   - Enterprise: 5명 (architect, developer, qa, reviewer, security)
+   - 조건: 환경변수 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 설정 필수
+
+Q8. 이전 프로젝트 정보를 기억할 수 있나요?
+──────────────────────────────────────
+A. 네, /memory 명령어로 중요 정보를 저장할 수 있습니다.
+   - 프로젝트 특성
+   - 팀 규칙
+   - 중요 결정사항
+   → 미래 세션에서 자동으로 참고됨
+
+================================================================================
+13. 팁과 권장사항
+================================================================================
+
+13.1 효율적인 PDCA 진행 팁
+────────────────────────────────────────────────────────────────────────────
+
+✓ 규칙 1: Plan부터 시작하세요
+  무작정 코딩하지 마세요. 먼저 /pdca plan으로 요구사항을 정리하세요.
+
+✓ 규칙 2: Design을 건너뛰지 마세요
+  Design 단계에서 아키텍처를 제대로 설계하면 구현이 쉬워집니다.
+
+✓ 규칙 3: 정기적으로 상태 확인하세요
+  /pdca status 또는 /pdca next로 진행 상황을 확인하세요.
+
+✓ 규칙 4: 90% 도달까지 반복하세요
+  Match Rate < 90%이면 /pdca iterate로 자동 개선하세요.
+
+✓ 규칙 5: 보고서를 빠뜨리지 마세요
+  /pdca report로 최종 결과를 기록하세요.
+
+13.2 명령어 실행 전 체크리스트
+────────────────────────────────────────────────────────────────────────────
+
+/pdca plan 실행 전:
+  ☐ 기능명 결정됨
+  ☐ 프로젝트 초기화 완료 (/starter init 등)
+  ☐ 요구사항 정리됨
+
+/pdca design 실행 전:
+  ☐ Plan 문서 완성됨
+
+/pdca do 실행 전:
+  ☐ Design 문서 완성됨
+
+/pdca analyze 실행 전:
+  ☐ 코드 구현 완료됨
+  ☐ 구현 코드가 Design을 따름
+
+/pdca iterate 실행 전:
+  ☐ Match Rate < 90%임을 확인
+
+/pdca report 실행 전:
+  ☐ Match Rate >= 90%임을 확인
+  ☐ 모든 테스트 통과
+  ☐ 코드 리뷰 완료
+
+13.3 프로젝트 규모별 추천 명령어 조합
+────────────────────────────────────────────────────────────────────────────
+
+[소규모 프로젝트 (1주일)]
+  /starter init
+  /pdca plan
+  /pdca design
+  /pdca do
+  /pdca analyze
+  (반복 필요 시) /pdca iterate
+  /pdca report
+
+[중규모 프로젝트 (1개월)]
+  /dynamic init
+  /pdca plan-plus              (복잡한 기획)
+  /phase-1-schema              (스키마 정의)
+  /pdca design
+  /phase-4-api                 (API 설계)
+  /pdca do
+  /zero-script-qa              (API 테스트)
+  /pdca analyze
+  /pdca iterate                (필요 시)
+  /code-review                 (코드 검토)
+  /simplify                    (코드 정리)
+  /pdca report
+
+[대규모 프로젝트 (6개월+)]
+  /enterprise init
+  /pdca team feature1          (팀 모드)
+  /pdca team feature2
+  /pdca team status            (팀 진행 상황)
+  /phase-1-schema ~ /phase-9-deployment (모든 phase 실행)
+  /pdca team cleanup           (팀 모드 종료)
+  /pdca report
+
+================================================================================
+마지막 말씀
+================================================================================
+
+BKIT 플러그인은 강력한 도구입니다. 올바르게 사용하면:
+
+✓ 프로젝트를 체계적으로 관리할 수 있습니다
+✓ 품질 높은 문서를 자동으로 생성할 수 있습니다
+✓ 구현과 설계의 갭을 자동으로 찾아 수정할 수 있습니다
+✓ 팀 협업을 더 효율적으로 할 수 있습니다
+
+이 가이드를 참고하여 BKIT 명령어를 효과적으로 활용하세요!
+
+================================================================================
+문서 정보
+================================================================================
+작성일: 2026-04-09
+버전: BKIT v1.5.9
+내용: /plan vs /pdca plan 차이, 전체 명령어 목록, 사용 가이드
+저장 위치: team-slack-bot/BKIT_명령어_가이드.txt
+
+================================================================================
+끝
+================================================================================
