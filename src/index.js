@@ -4,9 +4,11 @@ const { createApp } = require('./app');
 const { setupDailyStandup } = require('./schedulers/daily-standup');
 const logger = require('./logger');
 
+let app = null;
+
 async function main() {
   await initializeDatabase();
-  const app = createApp();
+  app = createApp();
   // 알림 스케줄러 시작
   setupDailyStandup(app);
   await app.start(config.port);
@@ -28,8 +30,29 @@ process.on('unhandledRejection', (reason, promise) => {
 // 글로벌 에러 핸들링: 처리되지 않은 예외
 process.on('uncaughtException', (error) => {
   logger.error(error, 'Uncaught Exception thrown');
-  process.exit(1);
+  if (app) {
+    app.stop().then(() => process.exit(1)).catch(() => process.exit(1));
+  } else {
+    process.exit(1);
+  }
 });
+
+// Graceful shutdown 핸들러
+async function gracefulShutdown(signal) {
+  logger.info({ signal }, 'Graceful shutdown initiated');
+  if (app) {
+    try {
+      await app.stop();
+      logger.info('Slack app stopped successfully');
+    } catch (error) {
+      logger.error({ error }, 'Error stopping Slack app');
+    }
+  }
+  process.exit(0);
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 main().catch((err) => {
   logger.error(err);

@@ -17,27 +17,37 @@ function createApp() {
   const app = new App(options);
 
   // Socket Mode 에러 핸들링
-  if (config.useSocketMode) {
-    // client 이벤트 리스너 설정 (소켓 모드 특정 에러 처리)
-    app.client.on?.('error', (error) => {
-      logger.error({ error }, 'Socket Mode client error');
-    });
+  if (config.useSocketMode && app.receiver) {
+    // SocketModeReceiver의 클라이언트에서 실제 이벤트 발생
+    const socketClient = app.receiver.client;
 
-    // ready 이벤트: 연결 성공
-    app.client.on?.('ready', () => {
-      logger.info('Socket Mode connection established');
-    });
+    if (socketClient) {
+      // 연결 성공
+      socketClient.on('connected', () => {
+        logger.info('Socket Mode connected successfully');
+      });
 
-    // disconnected 이벤트: 명시적 또는 비정상 종료
-    app.client.on?.('disconnected', (reason) => {
-      logger.warn({ reason }, 'Socket Mode disconnected');
-    });
+      // 명시적 또는 비정상 종료
+      socketClient.on('disconnected', (reason) => {
+        logger.warn({ reason }, 'Socket Mode disconnected');
+      });
 
-    // close 이벤트: 소켓 연결 종료
-    app.client.on?.('close', (code, reason) => {
-      logger.info({ code, reason }, 'Socket Mode connection closed');
-    });
+      // 에러 처리
+      socketClient.on('error', (error) => {
+        logger.error({ error }, 'Socket Mode error');
+      });
+
+      // 연결 종료
+      socketClient.on('close', () => {
+        logger.info('Socket Mode connection closed');
+      });
+    }
   }
+
+  // Bolt 앱 레벨 에러 핸들러 (추가 방어)
+  app.error(async (error) => {
+    logger.error({ error }, 'Bolt app-level error');
+  });
 
   registerHandlers(app);
   return app;
