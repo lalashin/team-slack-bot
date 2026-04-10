@@ -1,7 +1,7 @@
 const config = require('./config/slack');
 const { initializeDatabase } = require('./db/init');
 const { createApp } = require('./app');
-const { setupDailyStandup } = require('./schedulers/daily-standup');
+const { setupDailyStandup, stopSchedulers } = require('./schedulers/daily-standup');
 const logger = require('./logger');
 
 let app = null;
@@ -40,6 +40,15 @@ process.on('uncaughtException', (error) => {
 // Graceful shutdown 핸들러
 async function gracefulShutdown(signal) {
   logger.info({ signal }, 'Graceful shutdown initiated');
+
+  // 스케줄러 정리
+  try {
+    stopSchedulers();
+  } catch (error) {
+    logger.error({ error }, 'Error stopping schedulers');
+  }
+
+  // Slack 앱 종료
   if (app) {
     try {
       await app.stop();
@@ -48,6 +57,7 @@ async function gracefulShutdown(signal) {
       logger.error({ error }, 'Error stopping Slack app');
     }
   }
+
   process.exit(0);
 }
 

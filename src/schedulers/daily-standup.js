@@ -1,12 +1,13 @@
 const cron = require('node-cron');
 const logger = require('../logger');
 
+const scheduledJobs = [];
+
 function setupDailyStandup(app) {
-  const channelId = process.env.NOTIFICATION_CHANNEL_ID;
+  const channelId = process.env.SLACK_NOTIFICATION_CHANNEL;
 
   if (!channelId) {
-    logger.warn('NOTIFICATION_CHANNEL_ID 환경변수가 설정되지 않았습니다.');
-    return;
+    throw new Error('SLACK_NOTIFICATION_CHANNEL must be set');
   }
 
   // 봇 시작 알림
@@ -20,7 +21,7 @@ function setupDailyStandup(app) {
   });
 
   // 매일 오전 9시 알림 (한국 시간 기준)
-  cron.schedule('0 9 * * *', async () => {
+  const job = cron.schedule('0 9 * * *', async () => {
     try {
       await app.client.chat.postMessage({
         channel: channelId,
@@ -34,7 +35,15 @@ function setupDailyStandup(app) {
     timezone: 'Asia/Seoul',
   });
 
+  scheduledJobs.push(job);
   logger.info('Daily standup scheduler started (9:00 AM KST daily)');
 }
 
-module.exports = { setupDailyStandup };
+function stopSchedulers() {
+  scheduledJobs.forEach((job) => {
+    job.stop();
+  });
+  logger.info({ count: scheduledJobs.length }, 'All scheduled jobs stopped');
+}
+
+module.exports = { setupDailyStandup, stopSchedulers };
