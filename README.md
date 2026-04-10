@@ -15,6 +15,7 @@
 - **메시지 반응(Reaction)** - 반응(reaction)으로 작업 상태 자동 변경
   - ✅ `white_check_mark` - 작업 완료
   - ⏳ `hourglass_flowing_sand` - 진행 중으로 변경
+- **스케줄 알림** - 봇 기동 시 지정 채널에 시작 메시지 전송, 매일 오전 9시(한국 시간) Daily Standup 안내
 
 ## 기술스택
 
@@ -27,6 +28,7 @@
 | **Package Manager** | npm |
 | **Testing** | Jest |
 | **Code Quality** | ESLint |
+| **스케줄** | node-cron |
 
 ## 설치방법
 
@@ -113,6 +115,15 @@ Slack에서 아래 명령어를 입력하세요:
   사용 가능한 모든 명령어의 도움말을 표시합니다.
 ```
 
+### 알림 기능
+
+스케줄 알림을 쓰려면 `.env`에 `NOTIFICATION_CHANNEL_ID`를 설정하세요. 값은 알림을 받을 **채널 ID**입니다(Slack 데스크톱에서 채널 이름 옆 ··· → 채널 세부정보 등에서 확인).
+
+- **봇 시작 시**: 해당 채널에 “슬랙봇이 시작되었습니다!” 메시지가 전송됩니다.
+- **매일 오전 9시(Asia/Seoul)**: 같은 채널에 Daily Standup 안내 메시지가 전송됩니다.
+
+`NOTIFICATION_CHANNEL_ID`가 비어 있으면 스케줄러는 동작하지 않으며, 콘솔에 경고만 출력됩니다. 봇이 해당 채널에 메시지를 보내려면 Slack 앱에 `chat:write` 등 필요한 권한이 있어야 하고, 봇을 그 채널에 초대해 두어야 합니다.
+
 ### 반응으로 상태 변경
 
 메시지에 반응을 추가하면 작업 상태가 자동으로 변경됩니다:
@@ -135,6 +146,8 @@ team-slack-bot/
 │   │   └── dataService.js        # 데이터 접근 계층
 │   ├── utils/
 │   │   └── validators.js         # 입력 검증 유틸
+│   ├── schedulers/
+│   │   └── daily-standup.js      # Daily Standup 등 스케줄 알림
 │   └── db/
 │       └── init.js               # 데이터베이스 초기화
 ├── tests/
@@ -171,6 +184,7 @@ team-slack-bot/
 | `PORT` | 서버 포트 | `3000` |
 | `NODE_ENV` | 실행 환경 | `development` |
 | `DB_PATH` | SQLite 데이터베이스 경로 | `./data/slack-bot.db` |
+| `NOTIFICATION_CHANNEL_ID` | 스케줄 알림(시작 안내·Daily Standup)을 보낼 Slack 채널 ID. 미설정 시 알림 비활성화 | (없음) |
 
 ## 테스트
 
