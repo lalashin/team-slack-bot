@@ -11,6 +11,7 @@ yarn-error.log*
 # Build and distribution
 dist/
 build/
+.next/
 *.tsbuildinfo
 
 # IDE and editor
@@ -41,3 +42,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.temp
+
+# Local IDE / agent settings
+.claude/settings.local.json

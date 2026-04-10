@@ -1,7 +1,7 @@
 const dataService = require('../services/dataService');
 const { getHelpBlocksKo } = require('../messages/help');
 const logger = require('../logger');
-const { isValidTaskTitle } = require('../utils/validators');
+const { isValidTaskTitle, escapeSlackMrkdwn } = require('../utils/validators');
 
 async function handleTodoCommand({ command, ack, respond }) {
   await ack();
@@ -21,15 +21,20 @@ async function handleTodoCommand({ command, ack, respond }) {
       metadata: { title: text, channel: command.channel_id },
     });
 
+    const safeTitle = escapeSlackMrkdwn(text);
+    const safeId = escapeSlackMrkdwn(task.id);
+
+    // 보고서 항목 3·11 — Block Kit + mrkdwn 이스케이프 (2026-04-10)
     await respond({
       response_type: 'in_channel',
       blocks: [
         {
           type: 'section',
-          text: {
-            type: 'mrkdwn',
-            text: `✅ *작업이 추가되었습니다.*\n제목: ${text}\n작업 ID: \`${task.id}\``,
-          },
+          fields: [
+            { type: 'mrkdwn', text: '*상태*\n✅ 추가됨' },
+            { type: 'mrkdwn', text: `*제목*\n${safeTitle}` },
+            { type: 'mrkdwn', text: `*작업 ID*\n\`${safeId}\`` },
+          ],
         },
       ],
     });
@@ -62,7 +67,12 @@ async function handleListCommand({ command, ack, respond }) {
     }
 
     const taskList = tasks
-      .map((t, i) => `${i + 1}. ${t.title} (\`${t.status}\`) — \`${t.id}\``)
+      .map((t, i) => {
+        const title = escapeSlackMrkdwn(t.title);
+        const st = escapeSlackMrkdwn(t.status);
+        const id = escapeSlackMrkdwn(t.id);
+        return `${i + 1}. ${title} (\`${st}\`) — \`${id}\``;
+      })
       .join('\n');
 
     await respond({

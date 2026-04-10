@@ -1,5 +1,29 @@
 const { getDb } = require('./init');
 const { run, get, all } = require('./sql');
+const logger = require('../logger');
+
+/** 보고서 항목 2 — JSON 메타데이터 안전 직렬화 (2026-04-10) */
+function safeStringifyMetadata(metadata) {
+  try {
+    if (metadata === undefined || metadata === null) return null;
+    if (typeof metadata === 'string') return metadata;
+
+    const seen = new WeakSet();
+    return JSON.stringify(metadata, (key, value) => {
+      if (typeof value === 'bigint') return value.toString();
+      if (value instanceof Map) return Object.fromEntries(value);
+      if (value instanceof Set) return [...value];
+      if (typeof value === 'object' && value !== null) {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+      }
+      return value;
+    });
+  } catch (error) {
+    logger.error({ err: error }, 'Failed to stringify metadata for events_log');
+    return JSON.stringify({ error: 'serialization_failed' });
+  }
+}
 
 function nextTaskId() {
   return `task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -31,12 +55,7 @@ async function ensureUser(slackUserId) {
 
 async function insertEvent({ eventType, userId, taskId, metadata }) {
   const db = getDb();
-  const meta =
-    metadata === undefined || metadata === null
-      ? null
-      : typeof metadata === 'string'
-        ? metadata
-        : JSON.stringify(metadata);
+  const meta = safeStringifyMetadata(metadata);
   await run(db, `INSERT INTO events_log (event_type, user_id, task_id, metadata) VALUES (?, ?, ?, ?)`, [
     eventType,
     userId || null,

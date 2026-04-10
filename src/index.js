@@ -9,7 +9,6 @@ let app = null;
 async function main() {
   await initializeDatabase();
   app = createApp();
-  // 알림 스케줄러 시작
   setupDailyStandup(app);
   await app.start(config.port);
   const mode = config.useSocketMode ? 'Socket Mode (local-friendly)' : 'HTTP';
@@ -19,17 +18,45 @@ async function main() {
   );
 }
 
-// 글로벌 에러 핸들링: 처리되지 않은 Promise 거부
-process.on('unhandledRejection', (reason, promise) => {
+function serializeReason(reason) {
+  if (reason instanceof Error) {
+    return {
+      message: reason.message,
+      name: reason.name,
+    };
+  }
+  return String(reason);
+}
+
+// 보고서 항목 4 — unhandledRejection 로그 최소화 (프로덕션에서 스택/프로미스 전체 미노출, 2026-04-10)
+process.on('unhandledRejection', (reason) => {
+  const isDev = process.env.NODE_ENV !== 'production';
+
   logger.error(
-    { reason, promise },
-    'Unhandled Rejection at promise',
+    {
+      reason: reason instanceof Error
+        ? {
+            message: reason.message,
+            name: reason.name,
+            ...(isDev && { stack: reason.stack }),
+          }
+        : serializeReason(reason),
+      promiseState: 'rejected',
+    },
+    'Unhandled Rejection',
   );
 });
 
-// 글로벌 에러 핸들링: 처리되지 않은 예외
 process.on('uncaughtException', (error) => {
-  logger.error(error, 'Uncaught Exception thrown');
+  const isDev = process.env.NODE_ENV !== 'production';
+  logger.error(
+    {
+      message: error.message,
+      name: error.name,
+      ...(isDev && { stack: error.stack }),
+    },
+    'Uncaught Exception thrown',
+  );
   if (app) {
     app.stop().then(() => process.exit(1)).catch(() => process.exit(1));
   } else {
@@ -37,18 +64,15 @@ process.on('uncaughtException', (error) => {
   }
 });
 
-// Graceful shutdown 핸들러
 async function gracefulShutdown(signal) {
   logger.info({ signal }, 'Graceful shutdown initiated');
 
-  // 스케줄러 정리
   try {
     stopSchedulers();
   } catch (error) {
     logger.error({ error }, 'Error stopping schedulers');
   }
 
-  // Slack 앱 종료
   if (app) {
     try {
       await app.stop();

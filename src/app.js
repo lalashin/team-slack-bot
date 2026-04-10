@@ -1,50 +1,64 @@
-const { App } = require('@slack/bolt');
+const express = require('express');
+const { App, ExpressReceiver } = require('@slack/bolt');
 const config = require('./config/slack');
 const { registerHandlers } = require('./handlers');
 const logger = require('./logger');
+const { createHttpPayloadLimitMiddleware } = require('./middleware/httpPayloadLimit');
 
-function createApp() {
+function createSocketModeApp() {
+  // 보고서 항목 6 — 명시적 Socket Mode (app.js 6–17 대응, 2026-04-10)
   const options = {
     token: config.botToken,
     signingSecret: config.signingSecret,
+    socketMode: true,
+    appToken: config.appToken,
   };
+  logger.info({ mode: 'socket' }, 'Creating Slack app');
+  return new App(options);
+}
 
-  if (config.useSocketMode && config.appToken) {
-    options.socketMode = true;
-    options.appToken = config.appToken;
-  }
+function createHttpModeApp() {
+  // 보고서 항목 5 — HTTP 요청 본문 크기 상한 (Content-Length), Bolt raw-body와 호환 (2026-04-10)
+  const expressApp = express();
+  expressApp.use(createHttpPayloadLimitMiddleware());
 
-  const app = new App(options);
+  const receiver = new ExpressReceiver({
+    signingSecret: config.signingSecret,
+    app: expressApp,
+  });
 
-  // Socket Mode 에러 핸들링
+  logger.info({ mode: 'http' }, 'Creating Slack app');
+  return new App({
+    token: config.botToken,
+    receiver,
+  });
+}
+
+function createApp() {
+  const app = config.useSocketMode ? createSocketModeApp() : createHttpModeApp();
+
   if (config.useSocketMode && app.receiver) {
-    // SocketModeReceiver의 클라이언트에서 실제 이벤트 발생
     const socketClient = app.receiver.client;
 
     if (socketClient) {
-      // 연결 성공
       socketClient.on('connected', () => {
         logger.info('Socket Mode connected successfully');
       });
 
-      // 명시적 또는 비정상 종료
       socketClient.on('disconnected', (reason) => {
         logger.warn({ reason }, 'Socket Mode disconnected');
       });
 
-      // 에러 처리
       socketClient.on('error', (error) => {
         logger.error({ error }, 'Socket Mode error');
       });
 
-      // 연결 종료
       socketClient.on('close', () => {
         logger.info('Socket Mode connection closed');
       });
     }
   }
 
-  // Bolt 앱 레벨 에러 핸들러 (추가 방어)
   app.error(async (error) => {
     logger.error({ error }, 'Bolt app-level error');
   });
